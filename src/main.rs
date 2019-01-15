@@ -12,27 +12,24 @@ use core::panic::PanicInfo;
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
     println!("{}", info);
-    loop {}
+    rustos::hlt_loop();
 }
 
 #[cfg(not(test))]
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
+    use rustos::interrupts::PICS;
 
     println!("Hello World{}", "!");
 
     rustos::gdt::init();
     rustos::interrupts::init_idt();
 
-    //x86_64::instructions::int3();
-    fn stack_overflow() {
-        stack_overflow(); // for each recursion, the return address is pushed
-    }
+    unsafe { PICS.lock().initialize() };
 
-    // trigger a stack overflow
-    stack_overflow();
+    x86_64::instructions::interrupts::enable();
 
     println!("It did not crash!");
 
-    loop {}
+    rustos::hlt_loop();
 }
