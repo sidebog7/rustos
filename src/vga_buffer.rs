@@ -229,4 +229,51 @@ mod test {
             }
         }
     }
+
+    #[test]
+    fn non_ascii_byte() {
+        let mut writer = construct_writer();
+        writer.write_byte(0x94);
+        writer.write_byte(0xa0);
+
+        for(i,row) in writer.buffer.chars.iter().enumerate() {
+            for(j, screen_char) in row.iter().enumerate() {
+                let screen_char = screen_char.read();
+                if i == BUFFER_HEIGHT - 1 && j == 0 {
+                    assert_eq!(screen_char.ascii_character, 0x94);
+                    assert_eq!(screen_char.color_code, writer.color_code);
+                }
+                else if i == BUFFER_HEIGHT - 1 && j == 1 {
+                    assert_eq!(screen_char.ascii_character, 0xa0);
+                    assert_eq!(screen_char.color_code, writer.color_code);
+                }
+                else {
+                    assert_eq!(screen_char, empty_char());
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn non_ascii_string() {
+        let mut writer = construct_writer();
+        writer.write_string("ö");
+
+        for(i,row) in writer.buffer.chars.iter().enumerate() {
+            for(j, screen_char) in row.iter().enumerate() {
+                let screen_char = screen_char.read();
+                if i == BUFFER_HEIGHT - 1 && j == 0 {
+                    assert_eq!(screen_char.ascii_character, 0xfe);
+                    assert_eq!(screen_char.color_code, writer.color_code);
+                }
+                else if i == BUFFER_HEIGHT - 1 && j == 1 {
+                    assert_eq!(screen_char.ascii_character, 0xfe);
+                    assert_eq!(screen_char.color_code, writer.color_code);
+                }
+                else {
+                    assert_eq!(screen_char, empty_char());
+                }
+            }
+        }
+    }
 }
