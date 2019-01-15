@@ -21,5 +21,11 @@ pub extern "C" fn _start() -> ! {
 
     println!("Hello World{}", "!");
 
+    rustos::interrupts::init_idt();
+
+    x86_64::instructions::int3();
+
+    println!("It did not crash!");
+
     loop {}
 }
