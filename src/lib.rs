@@ -5,6 +5,7 @@ pub mod vga_buffer;
 pub mod serial;
 #[cfg(not(windows))] // no bang ("!") after the hash ("#")
 pub mod interrupts;
+pub mod gdt;
 
 pub unsafe fn exit_qemu() {
     use x86_64::instructions::port::Port;

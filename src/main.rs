@@ -21,9 +21,16 @@ pub extern "C" fn _start() -> ! {
 
     println!("Hello World{}", "!");
 
+    rustos::gdt::init();
     rustos::interrupts::init_idt();
 
-    x86_64::instructions::int3();
+    //x86_64::instructions::int3();
+    fn stack_overflow() {
+        stack_overflow(); // for each recursion, the return address is pushed
+    }
+
+    // trigger a stack overflow
+    stack_overflow();
 
     println!("It did not crash!");
 
