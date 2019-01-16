@@ -1,4 +1,4 @@
-use x86_64::structures::idt::{InterruptDescriptorTable, ExceptionStackFrame};
+use x86_64::structures::idt::{InterruptDescriptorTable, ExceptionStackFrame, PageFaultErrorCode};
 use crate::{print,println};
 
 use lazy_static::lazy_static;
@@ -30,6 +30,9 @@ lazy_static! {
             .set_handler_fn(timer_interrupt_handler);
         idt[usize::from(KEYBOARD_INTERRUPT_ID)]
             .set_handler_fn(keyboard_interrupt_handler);
+
+        idt.page_fault.set_handler_fn(page_fault_handler);
+
         idt
     };
 }
@@ -76,4 +79,15 @@ extern "x86-interrupt" fn keyboard_interrupt_handler(_stack_frame: &mut Exceptio
     }
 
     unsafe { PICS.lock().notify_end_of_interrupt(KEYBOARD_INTERRUPT_ID) }
+}
+
+extern "x86-interrupt" fn page_fault_handler(stack_frame: &mut ExceptionStackFrame, _error_code: PageFaultErrorCode) {
+    use crate::hlt_loop;
+    use x86_64::registers::control::Cr2;
+
+    println!("EXCEPTION: PAGE FAULT");
+    println!("Accessed Address {:?}", Cr2::read());
+    println!("{:#?}", stack_frame);
+
+    hlt_loop();
 }
