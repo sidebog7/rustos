@@ -5,6 +5,9 @@
 mod vga_buffer;
 
 use core::panic::PanicInfo;
+use bootloader::{bootinfo::BootInfo, entry_point};
+
+
 
 
 #[cfg(not(test))] // only compile when the test flag is not set
@@ -15,9 +18,10 @@ fn panic(info: &PanicInfo) -> ! {
     rustos::hlt_loop();
 }
 
+entry_point!(kernel_main);
+
 #[cfg(not(test))]
-#[no_mangle]
-pub extern "C" fn _start() -> ! {
+fn kernel_main(boot_info: &'static BootInfo) -> ! {
     use rustos::interrupts::PICS;
 
     println!("Hello World{}", "!");
@@ -29,20 +33,15 @@ pub extern "C" fn _start() -> ! {
 
     x86_64::instructions::interrupts::enable();
 
-    use rustos::memory::{self,translate_addr};
+    use rustos::memory;
+    use rustos::memory::{create_example_mapping, EmptyFrameAllocator};
 
-    const LEVEL_4_TABLE_ADDR: usize = 0o_177777_777_777_777_777_0000;
+    let mut recursive_page_table = unsafe {
+        memory::init(boot_info.p4_table_addr as usize)
+    };
 
-    let recursive_page_table = unsafe { memory::init(LEVEL_4_TABLE_ADDR) };
-
-    println!("0xb8000 -> {:?}", translate_addr(0xb8000, &recursive_page_table));
-
-    println!("0x20010a -> {:?}", translate_addr(0x20010a, &recursive_page_table));
-
-    println!("0x57ac001ffe48 -> {:?}", translate_addr(0x57ac001ffe48,
-        &recursive_page_table));
-
-
+    create_example_mapping(&mut recursive_page_table, &mut EmptyFrameAllocator);
+    unsafe { (0x1900 as *mut u64).write_volatile(0xf021f077f065f04e) };
 
     println!("It did not crash!");
 
